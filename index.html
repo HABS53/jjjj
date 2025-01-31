@@ -48,7 +48,7 @@
         let score = 0;
         let highScore = localStorage.getItem("highScore") || 0;
         document.getElementById("highScore").innerText = highScore;
-        let gameSpeed = 100;
+        let gameSpeed = 150;
         let gameInterval;
         let gameRunning = false;
 
@@ -127,7 +127,7 @@
             direction = "STOP"; // لا يتحرك عند إعادة التشغيل
             score = 0;
             document.getElementById("score").innerText = score;
-            gameSpeed = 100;
+            gameSpeed = 150;
             gameRunning = false;
             clearInterval(gameInterval);
         }
