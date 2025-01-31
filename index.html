@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة الثعبان</title>
+    <style>
+        body {
+            text-align: center;
+            background-color: #000087;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            background-color: black;
+            border: 3px solid white;
+        }
+        .controls {
+            margin-top: 10px;
+        }
+        button {
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>لعبة الثعبان</h1>
+    <p>النتيجة: <span id="score">0</span> | أعلى نتيجة: <span id="highScore">0</span></p>
+    <canvas id="gameCanvas" width="600" height="600"></canvas>
+    <div class="controls">
+        <button onclick="changeDirection('UP')">↑</button><br>
+        <button onclick="changeDirection('LEFT')">←</button>
+        <button onclick="changeDirection('RIGHT')">→</button><br>
+        <button onclick="changeDirection('DOWN')">↓</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        let box = 20;
+        let snake = [{ x: 10 * box, y: 10 * box }];
+        let direction = "STOP"; // الثعبان لا يتحرك حتى يضغط اللاعب على زر
+        let food = { x: randomPos(), y: randomPos(), color: getRandomColor(), shape: getRandomShape() };
+        let score = 0;
+        let highScore = localStorage.getItem("highScore") || 0;
+        document.getElementById("highScore").innerText = highScore;
+        let gameSpeed = 100;
+        let gameInterval;
+        let gameRunning = false;
+
+        function draw() {
+            ctx.fillStyle = "#000087";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // رسم الطعام
+            ctx.fillStyle = food.color;
+            if (food.shape === "circle") {
+                ctx.beginPath();
+                ctx.arc(food.x + box / 2, food.y + box / 2, box / 2, 0, 2 * Math.PI);
+                ctx.fill();
+            } else {
+                ctx.fillRect(food.x, food.y, box, box);
+            }
+
+            // رسم الثعبان
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = i === 0 ? "white" : "orange";
+                ctx.fillRect(snake[i].x, snake[i].y, box, box);
+            }
+
+            if (direction === "STOP") return;
+
+            let newHead = { x: snake[0].x, y: snake[0].y };
+            if (direction === "UP") newHead.y -= box;
+            if (direction === "DOWN") newHead.y += box;
+            if (direction === "LEFT") newHead.x -= box;
+            if (direction === "RIGHT") newHead.x += box;
+
+            // اصطدام بالجدار
+            if (newHead.x < 0 || newHead.x >= canvas.width || newHead.y < 0 || newHead.y >= canvas.height) {
+                resetGame();
+                return;
+            }
+
+            // اصطدام بنفسه
+            for (let i = 0; i < snake.length; i++) {
+                if (newHead.x === snake[i].x && newHead.y === snake[i].y) {
+                    resetGame();
+                    return;
+                }
+            }
+
+            // أكل الطعام
+            if (newHead.x === food.x && newHead.y === food.y) {
+                score += 10;
+                document.getElementById("score").innerText = score;
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem("highScore", highScore);
+                    document.getElementById("highScore").innerText = highScore;
+                }
+                food = { x: randomPos(), y: randomPos(), color: getRandomColor(), shape: getRandomShape() };
+                if (gameSpeed > 50) gameSpeed -= 2;
+                clearInterval(gameInterval);
+                gameInterval = setInterval(draw, gameSpeed);
+            } else {
+                snake.pop();
+            }
+
+            snake.unshift(newHead);
+        }
+
+        function startGame() {
+            if (!gameRunning) {
+                gameRunning = true;
+                gameInterval = setInterval(draw, gameSpeed);
+            }
+        }
+
+        function resetGame() {
+            alert("انتهت اللعبة! نقاطك: " + score);
+            snake = [{ x: 10 * box, y: 10 * box }];
+            direction = "STOP"; // لا يتحرك عند إعادة التشغيل
+            score = 0;
+            document.getElementById("score").innerText = score;
+            gameSpeed = 100;
+            gameRunning = false;
+            clearInterval(gameInterval);
+        }
+
+        function changeDirection(newDirection) {
+            if (direction === "STOP") {
+                gameRunning = true;
+                gameInterval = setInterval(draw, gameSpeed);
+            }
+            if (newDirection === "UP" && direction !== "DOWN") direction = "UP";
+            if (newDirection === "DOWN" && direction !== "UP") direction = "DOWN";
+            if (newDirection === "LEFT" && direction !== "RIGHT") direction = "LEFT";
+            if (newDirection === "RIGHT" && direction !== "LEFT") direction = "RIGHT";
+        }
+
+        document.addEventListener("keydown", (event) => {
+            if (event.keyCode === 87) changeDirection("UP"); // W
+            if (event.keyCode === 83) changeDirection("DOWN"); // S
+            if (event.keyCode === 65) changeDirection("LEFT"); // A
+            if (event.keyCode === 68) changeDirection("RIGHT"); // D
+        });
+
+        function getRandomColor() {
+            const colors = ["red", "green", "black"];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function getRandomShape() {
+            return Math.random() > 0.5 ? "square" : "circle";
+        }
+
+        function randomPos() {
+            return Math.floor(Math.random() * 30) * box;
+        }
+    </script>
+</body>
+</html>
